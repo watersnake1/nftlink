@@ -29,6 +29,7 @@ describe("LinkedList Token", function () {
     mintedTwo = await hardhatnft2.setupTestTokens(87);
     balOne = await hardhatnft1.balanceOf(owner.address);
     balTwo = await hardhatnft2.balanceOf(owner.address);
+
   });
 
   // make sure that we can mint an nft out of both contracts
@@ -52,14 +53,43 @@ describe("LinkedList Token", function () {
     });
 
     it("should deposit nfts from both contracts into the linked list contract", async function () {
+      //approve the tokens so the contract can transfer them
+      var approveResult1 = await hardhatnft1.connect(owner).approve(hardhatLLtoken.address,142);
+      var approveResult2 = await hardhatnft2.connect(owner).approve(hardhatLLtoken.address,87);
+      //then make the deposits
       var deposit1 = await hardhatLLtoken.createDeposit(hardhatLLtoken.address, hardhatnft1.address, 142);
       var deposit2 = await hardhatLLtoken.createDeposit(hardhatLLtoken.address, hardhatnft2.address, 87);
-      var LLBalance1 = await hardhatnft1.balanceOf(hardhatLLtoken.address);
-      var LLBalance2 = await hardhatnft2.balanceOf(hardhatLLtoken.address);
-      expect(LLBalance1).to.equal(1);
-      expect(LLBalance2).to.equal(1);
-      //expect(depsoit2).to.equal(true);
+      var balanceLL = await hardhatLLtoken.balanceOf(owner.address);
+      console.log(balanceLL);
+      expect(balanceLL).to.equal(2);
     });
+
+    it("should add nfts to a linked list", async function() {
+      var addedOne = await hardhatLLtoken.addLinkedListEntry(0);
+      var addedTwo = await hardhatLLtoken.addLinkedListEntry(1);
+      await addedOne.wait();
+      await addedTwo.wait();
+  
+      expect(addedOne.value).to.equal(0);
+      expect(addedTwo.value).to.equal(0);
+    });
+
+    it("should get the current head of the user", async function() {
+      var head = await hardhatLLtoken.connect(owner).getHeadString(owner.address);
+      await head.wait();
+      console.log(head);
+      expect(head).to.not.equal(null);
+    });
+
+    /*
+    it("should traverse the list and get the last item", async function() {
+      var lastIdInternal = await hardhatLLtoken.traverseUntil(1);
+      var result = await hardhatLLtoken.getTokenById(lastIdInternal);
+      //console.log(result);
+      expect(lastIdInternal).to.equal(1);
+    });
+    */
+
 
   });
 

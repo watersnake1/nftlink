@@ -37,25 +37,40 @@ contract Ltoken is ERC721, Ownable {
   mapping (address => bytes32) public heads;
 
   constructor() ERC721("Linked List Repo", "LLR") {
+    _currentTokenId = 0;
   }
 
   //ll functions
   function addLinkedListEntry(uint _internalTokenId) public returns (bool) {
     //need to first create a head in case the user hasn't started their list
-    listItem memory itm = listItem(heads[msg.sender],_internalTokenId);   
+    listItem memory itm;
+    if (lengths[msg.sender] > 0) {
+      itm = listItem(heads[msg.sender],_internalTokenId);   
+    }
+    else {
+      itm = listItem(0,_internalTokenId);
+    }
     bytes32 id = keccak256(abi.encodePacked(itm.internalTokenId,block.timestamp,lengths[msg.sender]));
     userItems[msg.sender][id] = itm;
     heads[msg.sender] = id;
     lengths[msg.sender] = lengths[msg.sender].add(1);
+    return true;
   }
+
   // get the token id associated with this entry
   function getEntry(bytes32 _id) public returns (bytes32, uint) {
     return (userItems[msg.sender][_id].next,userItems[msg.sender][_id].internalTokenId);
   }
   // get the tip of the list
-  function getHead(address _sender) private returns (bytes32) {
+  function getHead(address _sender) public returns (bytes32) {
     return heads[_sender];
   }
+
+  function getHeadString(address _sender) public returns(string memory) {
+    string memory head = string(abi.encodePacked(heads[_sender]));
+    return head;
+  }
+
   // traverse the list
   function traverseUntil(uint _stop) public returns (uint) {
     require(_stop < lengths[msg.sender], "Stopping point beyond maximum length");
@@ -84,13 +99,13 @@ contract Ltoken is ERC721, Ownable {
   // get the next token id. private info
   function _getNextId() private returns (uint) {
     uint cti = _currentTokenId;
-    _currentTokenId.add(1);
+    _currentTokenId = _currentTokenId.add(1);
     return cti;
   }
 
   function createDeposit(address _deployedAddress, address _tokenContract, uint _tokenId) public returns (bool) {
     // transfer the NFT to the vault, (explore the return types and what they should be here)
-    IERC721(_tokenContract).approve(_deployedAddress, _tokenId);
+    //IERC721(_tokenContract).approve(_deployedAddress, _tokenId);
     IERC721(_tokenContract).transferFrom(msg.sender, _deployedAddress, _tokenId);
     //(bool success, bytes memory data) = _tokenContract.delegatecall(abi.encodeWithSignature("transferFrom(address, address, uint256)", msg.sender,a,_tokenId)); 
     //require(success, "transfer failed");
